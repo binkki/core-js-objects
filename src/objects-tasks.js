@@ -18,7 +18,9 @@
  *    shallowCopy({}) => {}
  */
 function shallowCopy(obj) {
-  return { ...obj };
+  const result = {};
+  Object.assign(result, obj);
+  return result;
 }
 
 /**
