@@ -357,32 +357,100 @@ function group(array, keySelector, valueSelector) {
  */
 
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  value: '',
+  hasUniqueValue: [0, 0, 0],
+  order: 0,
+
+  check(currentElement, currentOrder) {
+    if (currentElement !== -1 && this.hasUniqueValue[currentElement] !== 0) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more then one time inside the selector'
+      );
+    }
+    if (currentOrder !== -1 && this.order > currentOrder) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    this.check(0, 1);
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${this.value}${value}` },
+      hasUniqueValue: {
+        value: [1, this.hasUniqueValue[1], this.hasUniqueValue[2]],
+      },
+      order: { value: 1 },
+    });
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    this.check(1, 2);
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${this.value}#${value}` },
+      hasUniqueValue: {
+        value: [this.hasUniqueValue[0], 1, this.hasUniqueValue[2]],
+      },
+      order: { value: 2 },
+    });
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    this.check(-1, 3);
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${this.value}.${value}` },
+      hasUniqueValue: {
+        value: [...this.hasUniqueValue],
+      },
+      order: { value: 3 },
+    });
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    this.check(-1, 4);
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${this.value}[${value}]` },
+      hasUniqueValue: {
+        value: [...this.hasUniqueValue],
+      },
+      order: { value: 4 },
+    });
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    this.check(-1, 5);
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${this.value}:${value}` },
+      hasUniqueValue: {
+        value: [...this.hasUniqueValue],
+      },
+      order: { value: 5 },
+    });
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    this.check(2, 6);
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${this.value}::${value}` },
+      hasUniqueValue: {
+        value: [this.hasUniqueValue[0], this.hasUniqueValue[1], 1],
+      },
+      order: { value: 6 },
+    });
+  },
+
+  combine(selector1, combinator, selector2) {
+    return Object.defineProperties(Object.create(this), {
+      value: { value: `${selector1.value} ${combinator} ${selector2.value}` },
+      hasUniqueValue: {
+        value: [...this.hasUniqueValue],
+      },
+    });
+  },
+
+  stringify() {
+    return this.value;
   },
 };
 
